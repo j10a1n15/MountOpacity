@@ -5,14 +5,14 @@ import dev.isxander.yacl3.api.controller.FloatSliderControllerBuilder;
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import dev.isxander.yacl3.config.v2.api.SerialEntry;
 import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import dev.isxander.yacl3.platform.YACLPlatform;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public class MountOpacityConfig {
     public static final ConfigClassHandler<MountOpacityConfig> CONFIG = ConfigClassHandler.createBuilder(MountOpacityConfig.class)
             .serializer(config -> GsonConfigSerializerBuilder.create(config)
-                    .setPath(FabricLoader.getInstance().getConfigDir().resolve("mountopacity.json"))
+                    .setPath(YACLPlatform.getConfigDir().resolve("mountopacity.json"))
                     .build())
             .build();
 
@@ -23,42 +23,42 @@ public class MountOpacityConfig {
 
     public static Screen configScreen(Screen parent) {
         return YetAnotherConfigLib.create(CONFIG, ((defaults, config, builder) -> builder
-                .title(Text.translatable("mount-opacity.mount-opacity"))
+                .title(Component.translatable("mount-opacity.mount-opacity"))
                 .category(ConfigCategory.createBuilder()
-                        .name(Text.translatable("mount-opacity.mount-opacity"))
+                        .name(Component.translatable("mount-opacity.mount-opacity"))
                         .option(Option.<Float>createBuilder()
-                                .name(Text.translatable("mount-opacity.horse-opacity"))
-                                .description(OptionDescription.of(Text.translatable("mount-opacity.horse-opacity.description")))
+                                .name(Component.translatable("mount-opacity.horse-opacity"))
+                                .description(OptionDescription.of(Component.translatable("mount-opacity.horse-opacity.description")))
                                 .binding(100F, () -> config.horseOpacity, newVal -> config.horseOpacity = newVal)
                                 .controller(opt -> FloatSliderControllerBuilder.create(opt)
-                                        .formatValue(value -> Text.of(String.format("%,.0f", value) + "%"))
+                                        .formatValue(value -> Component.literal(String.format("%,.0f", value) + "%"))
                                         .range(0F, 100F)
                                         .step(1F))
                                 .build())
                         .option(Option.<Float>createBuilder()
-                                .name(Text.translatable("mount-opacity.pig-opacity"))
-                                .description(OptionDescription.of(Text.translatable("mount-opacity.pig-opacity.description")))
+                                .name(Component.translatable("mount-opacity.pig-opacity"))
+                                .description(OptionDescription.of(Component.translatable("mount-opacity.pig-opacity.description")))
                                 .binding(100F, () -> config.pigOpacity, newVal -> config.pigOpacity = newVal)
                                 .controller(opt -> FloatSliderControllerBuilder.create(opt)
-                                        .formatValue(value -> Text.of(String.format("%,.0f", value) + "%"))
+                                        .formatValue(value -> Component.literal(String.format("%,.0f", value) + "%"))
                                         .range(0F, 100F)
                                         .step(1F))
                                 .build())
                         .option(Option.<Float>createBuilder()
-                                .name(Text.translatable("mount-opacity.strider-opacity"))
-                                .description(OptionDescription.of(Text.translatable("mount-opacity.strider-opacity.description")))
+                                .name(Component.translatable("mount-opacity.strider-opacity"))
+                                .description(OptionDescription.of(Component.translatable("mount-opacity.strider-opacity.description")))
                                 .binding(100F, () -> config.striderOpacity, newVal -> config.striderOpacity = newVal)
                                 .controller(opt -> FloatSliderControllerBuilder.create(opt)
-                                        .formatValue(value -> Text.of(String.format("%,.0f", value) + "%"))
+                                        .formatValue(value -> Component.literal(String.format("%,.0f", value) + "%"))
                                         .range(0F, 100F)
                                         .step(1F))
                                 .build())
                         .option(Option.<Float>createBuilder()
-                                .name(Text.translatable("mount-opacity.camel-opacity"))
-                                .description(OptionDescription.of(Text.translatable("mount-opacity.camel-opacity.description")))
+                                .name(Component.translatable("mount-opacity.camel-opacity"))
+                                .description(OptionDescription.of(Component.translatable("mount-opacity.camel-opacity.description")))
                                 .binding(100F, () -> config.camelOpacity, newVal -> config.camelOpacity = newVal)
                                 .controller(opt -> FloatSliderControllerBuilder.create(opt)
-                                        .formatValue(value -> Text.of(String.format("%,.0f", value) + "%"))
+                                        .formatValue(value -> Component.literal(String.format("%,.0f", value) + "%"))
                                         .range(0F, 100F)
                                         .step(1F))
                                 .build())

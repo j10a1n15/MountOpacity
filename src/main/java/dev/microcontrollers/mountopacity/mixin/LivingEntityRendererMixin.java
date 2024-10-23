@@ -2,22 +2,24 @@ package dev.microcontrollers.mountopacity.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.microcontrollers.mountopacity.config.MountOpacityConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.passive.AbstractHorseEntity;
-import net.minecraft.entity.passive.CamelEntity;
-import net.minecraft.entity.passive.PigEntity;
-import net.minecraft.entity.passive.StriderEntity;
-import net.minecraft.util.Identifier;
-//#if MC >= 1.21
-import net.minecraft.util.math.ColorHelper;
-//#endif
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+//? if >=1.21.2
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.resources.ResourceLocation;
+//? if =1.21
+/*import net.minecraft.util.FastColor;*/
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.animal.camel.Camel;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.monster.Strider;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,63 +29,61 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 @Mixin(LivingEntityRenderer.class)
 public class LivingEntityRendererMixin<T extends LivingEntity> {
+
     @SuppressWarnings("rawtypes")
-    @WrapOperation(method = "getRenderLayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/model/EntityModel;getLayer(Lnet/minecraft/util/Identifier;)Lnet/minecraft/client/render/RenderLayer;"))
-    private RenderLayer transparentEntityRenderLayer(EntityModel model, Identifier texture, Operation<RenderLayer> original) {
+    @WrapOperation(method = "getRenderType", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/EntityModel;renderType(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/RenderType;"))
+    private RenderType transparentEntityRenderLayer(EntityModel instance, ResourceLocation resourceLocation, Operation<RenderType> original) {
         // let's not set this unless we absolutely have to
         // TODO: fix pig saddles
-        if (MinecraftClient.getInstance().player != null && MinecraftClient.getInstance().player.hasVehicle() &&
-                ((MountOpacityConfig.CONFIG.instance().horseOpacity != 100 && texture.toString().contains("horse")) ||
-                        (MountOpacityConfig.CONFIG.instance().pigOpacity != 100 && texture.toString().contains("pig")) ||
-                        (MountOpacityConfig.CONFIG.instance().striderOpacity != 100 && texture.toString().contains("strider")) ||
-                        (MountOpacityConfig.CONFIG.instance().camelOpacity != 100 && texture.toString().contains("camel")))) {
-            return RenderLayer.getEntityTranslucent(texture);
+        if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.isPassenger() &&
+                ((MountOpacityConfig.CONFIG.instance().horseOpacity != 100 && resourceLocation.toString().contains("horse")) ||
+                        (MountOpacityConfig.CONFIG.instance().pigOpacity != 100 && resourceLocation.toString().contains("pig")) ||
+                        (MountOpacityConfig.CONFIG.instance().striderOpacity != 100 && resourceLocation.toString().contains("strider")) ||
+                        (MountOpacityConfig.CONFIG.instance().camelOpacity != 100 && resourceLocation.toString().contains("camel")))) {
+            return RenderType.entityTranslucent(resourceLocation);
         }
-        return original.call(model, texture);
+        return original.call(instance, resourceLocation);
     }
 
-    //#if MC >= 1.21
-    @ModifyArgs(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;III)V"))
-    //#else
-    //$$ @ModifyArgs(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V"))
-    //#endif
-    private void transparentRiddenEntity(Args args, T livingEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        if (livingEntity instanceof AbstractHorseEntity && livingEntity.hasPassenger(MinecraftClient.getInstance().player) && MountOpacityConfig.CONFIG.instance().horseOpacity != 0) {
-            //#if MC >= 1.21
-            args.set(4, ColorHelper.Argb.fromFloats(MountOpacityConfig.CONFIG.instance().horseOpacity / 100F, 1.0F, 1.0F, 1.0F));
-            //#else
-            //$$ args.set(7, MountOpacityConfig.CONFIG.instance().horseOpacity / 100F);
-            //#endif
-        } else if (livingEntity instanceof PigEntity && livingEntity.hasPassenger(MinecraftClient.getInstance().player) && MountOpacityConfig.CONFIG.instance().pigOpacity != 0) {
-            //#if MC >= 1.21
-            args.set(4, ColorHelper.Argb.fromFloats(MountOpacityConfig.CONFIG.instance().pigOpacity / 100F, 1.0F, 1.0F, 1.0F));
-            //#else
-            //$$ args.set(7, MountOpacityConfig.CONFIG.instance().pigOpacity / 100F);
-            //#endif
-        } else if (livingEntity instanceof StriderEntity && livingEntity.hasPassenger(MinecraftClient.getInstance().player) && MountOpacityConfig.CONFIG.instance().striderOpacity != 0) {
-            //#if MC >= 1.21
-            args.set(4, ColorHelper.Argb.fromFloats(MountOpacityConfig.CONFIG.instance().striderOpacity / 100F, 1.0F, 1.0F, 1.0F));
-            //#else
-            //$$ args.set(7, MountOpacityConfig.CONFIG.instance().striderOpacity / 100F);
-            //#endif
-        } else if (livingEntity instanceof CamelEntity && livingEntity.hasPassenger(MinecraftClient.getInstance().player) && MountOpacityConfig.CONFIG.instance().camelOpacity != 0) {
-            //#if MC >= 1.21
-            args.set(4, ColorHelper.Argb.fromFloats(MountOpacityConfig.CONFIG.instance().camelOpacity / 100F, 1.0F, 1.0F, 1.0F));
-            //#else
-            //$$ args.set(7, MountOpacityConfig.CONFIG.instance().camelOpacity / 100F);
-            //#endif
-        }
-    }
-
-    // if it's 0, let's just cancel the rendering. this will also help prevent translucency sorting issues
-    @Inject(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("HEAD"), cancellable = true)
-    private void cancelRiddenEntity(T livingEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo ci) {
-        if ((livingEntity instanceof AbstractHorseEntity && MountOpacityConfig.CONFIG.instance().horseOpacity == 0) ||
-                (livingEntity instanceof PigEntity && MountOpacityConfig.CONFIG.instance().pigOpacity == 0) ||
-                (livingEntity instanceof StriderEntity && MountOpacityConfig.CONFIG.instance().striderOpacity == 0) ||
-                (livingEntity instanceof CamelEntity && MountOpacityConfig.CONFIG.instance().camelOpacity == 0)) {
-            ci.cancel();
-        }
-
-    }
+//    @ModifyArgs(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At(value = "INVOKE", target = /*? if =1.21 {*/ /*"Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;III)V" *//*?} else {*/ "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V" /*?}*/))
+//    private void transparentRiddenEntity(Args args, T entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight) {
+//        if (Minecraft.getInstance().player == null) return;
+//        if (entity instanceof AbstractHorse && entity.hasPassenger(Minecraft.getInstance().player) && MountOpacityConfig.CONFIG.instance().horseOpacity != 0) {
+//            //? if >=1.21 {
+//            args.set(4, FastColor.ARGB32.colorFromFloat(MountOpacityConfig.CONFIG.instance().horseOpacity / 100F, 1.0F, 1.0F, 1.0F));
+//            //?} else {
+//            /*args.set(7, MountOpacityConfig.CONFIG.instance().horseOpacity / 100F);
+//            *///?}
+//        } else if (entity instanceof Pig && entity.hasPassenger(Minecraft.getInstance().player) && MountOpacityConfig.CONFIG.instance().pigOpacity != 0) {
+//            //? if >=1.21 {
+//            args.set(4, FastColor.ARGB32.colorFromFloat(MountOpacityConfig.CONFIG.instance().pigOpacity / 100F, 1.0F, 1.0F, 1.0F));
+//            //?} else {
+//            /*args.set(7, MountOpacityConfig.CONFIG.instance().pigOpacity / 100F);
+//            *///?}
+//        } else if (entity instanceof Strider && entity.hasPassenger(Minecraft.getInstance().player) && MountOpacityConfig.CONFIG.instance().striderOpacity != 0) {
+//            //? if >=1.21 {
+//            args.set(4, FastColor.ARGB32.colorFromFloat(MountOpacityConfig.CONFIG.instance().striderOpacity / 100F, 1.0F, 1.0F, 1.0F));
+//            //?} else {
+//            /*args.set(7, MountOpacityConfig.CONFIG.instance().striderOpacity / 100F);
+//             *///?}
+//        } else if (entity instanceof Camel && entity.hasPassenger(Minecraft.getInstance().player) && MountOpacityConfig.CONFIG.instance().camelOpacity != 0) {
+//            //? if >=1.21 {
+//            args.set(4, FastColor.ARGB32.colorFromFloat(MountOpacityConfig.CONFIG.instance().camelOpacity / 100F, 1.0F, 1.0F, 1.0F));
+//            //?} else {
+//            /*args.set(7, MountOpacityConfig.CONFIG.instance().camelOpacity / 100F);
+//             *///?}
+//        }
+//    }
+//
+//    // if it's 0, let's just cancel the rendering. this will also help prevent translucency sorting issues
+//    @Inject(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At("HEAD"), cancellable = true)
+//    private void cancelRiddenEntity(T entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, CallbackInfo ci) {
+//        if ((entity instanceof AbstractHorse && MountOpacityConfig.CONFIG.instance().horseOpacity == 0) ||
+//                (entity instanceof Pig && MountOpacityConfig.CONFIG.instance().pigOpacity == 0) ||
+//                (entity instanceof Strider && MountOpacityConfig.CONFIG.instance().striderOpacity == 0) ||
+//                (entity instanceof Camel && MountOpacityConfig.CONFIG.instance().camelOpacity == 0)) {
+//            ci.cancel();
+//        }
+//
+//    }
 }
