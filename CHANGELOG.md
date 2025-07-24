@@ -1,0 +1,1 @@
+- Fix Saddles/Equipment Layers not having translucency

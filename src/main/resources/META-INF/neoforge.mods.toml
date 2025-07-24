@@ -14,7 +14,7 @@ logoFile = "assets/${id}/icon.png"
 [["dependencies.${id}"]]
 modId = "neoforge"
 type = "required"
-versionRange = "[${forgeConstraint}"
+versionRange = "[21.8.11,)"
 ordering = "NONE"
 side = "CLIENT"
 
