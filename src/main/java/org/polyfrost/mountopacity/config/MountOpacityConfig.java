@@ -7,6 +7,8 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 public class MountOpacityConfig extends Config {
     public MountOpacityConfig() {
         super(MountOpacity.ID + ".json", MountOpacity.NAME, Category.QOL);
+
+        loadFrom("patcher.toml");
     }
 
     @Slider(
