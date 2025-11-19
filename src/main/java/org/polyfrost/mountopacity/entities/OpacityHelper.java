@@ -26,8 +26,13 @@ public abstract class OpacityHelper {
 
         EntityPlayerSP player = OmniClient.getPlayer();
         if (player == null) return;
-
+        //#if MC==10809
         Entity ridingEntity = player.ridingEntity;
+        //#elseif FABRIC
+        //$$ Entity ridingEntity = player.getVehicle();
+        //#else
+        //$$ Entity ridingEntity = player.getRidingEntity();
+        //#endif
         if (ridingEntity == null) return;
 
         shouldMakeTransparent = ridingEntity == entity;
